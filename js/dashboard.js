@@ -59,7 +59,7 @@ transactionForm.addEventListener('submit', async(e)=>{
             // Энэ сард, энэ ангилалд урьд нь хийгдсэн бүх зарлагуудын нийлбэрийг Supabase-с татах
             const { data: pastExpenses } = await supabase
                 .from('transactions')
-                .select('amount')
+                .select('amount, date')
                 .eq('user_id', user.id)
                 .eq('type', 'expense')
                 .eq('category', category);
@@ -75,6 +75,21 @@ transactionForm.addEventListener('submit', async(e)=>{
                 });
             }
 
+            const newTotal = totalPastExpense + amount;
+
+            if (newTotal > limitAmount) {
+                const proceed = confirm(
+                    `ТӨСӨВ ХЭТРЭХ АНХААРУУЛГА!\n\n` +
+                    `Ангилал: ${category}\n` +
+                    `Төсөв: ${limitAmount.toLocaleString()}₮\n` +
+                    `Одоогийн зарцуулалт: ${newTotal.toLocaleString()}₮\n\n` +
+                    `Үргэлжлүүлэх үү?`
+                );
+                if (!proceed) return;
+            }
+
+            /*
+
             // Хуучин зарлагууд дэар ОДООНЫ ШИНЭ зарлагын дүнг нэмээд лимитээс давж байгааг шалгах
             if (totalPastExpense + amount > limitAmount) {
                 const currentTotal = totalPastExpense + amount;
@@ -86,7 +101,7 @@ transactionForm.addEventListener('submit', async(e)=>{
                 if (!proceed) {
                     return; // Хэрэв хэрэглэгч "Цуцлах" дээр дарвал гүйлгээг хадгалахгүй зогсооно!
                 }
-            }
+            } */
         }
     }
 
@@ -145,6 +160,25 @@ async function fetchTransaction(){
 
     // Үлдэгдэл баланс = Нийт Орлого - Нийт Зарлага
     const totalBalance = totalIncome - totalExpense;
+
+    const badgeDiv = document.getElementById('user-badge');
+
+    let badgeText = "";
+    let badgeColor = "";
+
+    if (totalBalance >= 20000000) {
+        badgeText = "🏆 Санхүүгийн мастер";
+        badgeColor = "text-warning";
+    } else if (totalBalance >= 5000000) {
+        badgeText = "💰 Ухаалаг хадгалагч";
+        badgeColor = "text-success";
+    } else if (totalBalance >= 1000000) {
+        badgeText = "📊 Мундаг хадгалагч";
+        badgeColor = "text-primary";
+    }
+
+    document.getElementById('user-badge').textContent = badgeText;
+    document.getElementById('user-badge').className = `fw-bold small ms-2 ${badgeColor}`;
 
     // Бодсон дүнг HTML карт руу бичих
     document.getElementById('total-balance').textContent = `${totalBalance.toLocaleString()} ₮`;
